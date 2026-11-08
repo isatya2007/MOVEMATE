@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import "./App.css";
+import RideSearch from './pages/RideSearch.jsx'
 
 const API = "http://localhost:5000/api/v1";
 

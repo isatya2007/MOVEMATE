@@ -4,6 +4,7 @@ import { api } from '../services/api.js'
 import { toLocalInputValue } from '../utils/formatDate.js'
 import RideSearchForm from '../components/rides/RideSearchForm.jsx'
 import RideCard, { RideCardSkeleton } from '../components/rides/RideCard.jsx'
+import RequestSeatModal from '../components/rides/RequestSeatModal.jsx'
 import Alert from '../components/common/Alert.jsx'
 import Button from '../components/common/Button.jsx'
 import EmptyState from '../components/common/EmptyState.jsx'
@@ -44,6 +45,8 @@ export default function RideSearch() {
   const queryKey = searchParams.toString()
   const [attempt, setAttempt] = useState(0)
   const [result, setResult] = useState({ key: null, rides: [], total: 0, error: '' })
+  const [requestingRide, setRequestingRide] = useState(null) // the ride whose pop-up is open
+  const [requestedIds, setRequestedIds] = useState([]) // rides this person has already asked for
 
   const search = parseSearch(searchParams)
   const requestKey = `${queryKey}#${attempt}`
@@ -66,6 +69,11 @@ export default function RideSearch() {
       cancelled = true
     }
   }, [queryKey, requestKey])
+
+  function handleRequested(rideId) {
+    setRequestedIds((ids) => [...ids, rideId])
+    setRequestingRide(null)
+  }
 
   return (
     <section>
@@ -106,7 +114,12 @@ export default function RideSearch() {
             </p>
             <div className="space-y-4">
               {result.rides.map((ride) => (
-                <RideCard key={ride.id} ride={ride} />
+                <RideCard
+                  key={ride.id}
+                  ride={ride}
+                  requested={requestedIds.includes(ride.id)}
+                  onRequest={setRequestingRide}
+                />
               ))}
             </div>
             <p className="mt-6 text-center text-xs text-slate-500">
@@ -116,6 +129,13 @@ export default function RideSearch() {
           </>
         )}
       </div>
+
+      <RequestSeatModal
+        ride={requestingRide}
+        search={search.valid ? search.form : undefined}
+        onClose={() => setRequestingRide(null)}
+        onSuccess={handleRequested}
+      />
     </section>
   )
 }

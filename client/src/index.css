@@ -1,44 +1,45 @@
+@import "tailwindcss";
 
-:root {
-  font-family: 'DM Sans', Arial, sans-serif;
-  color: #172b25;
-  background: #ffffff;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
+/* Your MoveMate greens, in ONE place. Every bg-brand-*, text-brand-* and
+   ring-brand-* class in the app uses these values. */
+@theme {
+  --color-brand-50: #e5f6ee;
+  --color-brand-100: #c9edda;
+  --color-brand-600: #0b956b;
+  --color-brand-700: #07845e;
+  --color-brand-800: #056347;
 }
 
 html {
-  min-width: 320px;
   scroll-behavior: smooth;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
 }
 
 body {
   margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-#root {
-  width: 100%;
-  min-height: 100vh;
-}
-
-button, input {
-  font-family: inherit;
-}
-
-button:focus-visible, input:focus-visible {
-  outline: 2px solid #087f5b;
-  outline-offset: 3px;
+  background-color: #fbfdfb;
+  color: #142b23;
+  -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background: #d7eee2;
-  color: #056347;
+  background: #b9ead2;
+  color: #064b35;
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,4 +1,6 @@
+import { Link } from 'react-router-dom'
 import { formatDeparture } from '../../utils/formatDate.js'
+import Button from '../common/Button.jsx'
 
 function matchTier(score) {
   if (score >= 80) return { label: 'Great match', style: 'bg-emerald-50 text-emerald-800 ring-emerald-200' }
@@ -26,7 +28,9 @@ function initials(name = '') {
     .toUpperCase()
 }
 
-export default function RideCard({ ride }) {
+// requested : true once this person has sent a request for this ride
+// onRequest : called with the ride when "Request seat" is tapped
+export default function RideCard({ ride, requested = false, onRequest }) {
   const { provider, vehicle, match } = ride
   const tier = matchTier(match.score)
   const chips = verificationChips(provider?.verificationStatus)
@@ -107,6 +111,25 @@ export default function RideCard({ ride }) {
           </div>
         </div>
       </div>
+
+      {/* Action */}
+      {onRequest && (
+        <div className="mt-4">
+          {requested ? (
+            <p role="status" className="rounded-xl bg-brand-50 px-4 py-3 text-center text-sm text-brand-800">
+              <span className="font-semibold">Request sent.</span> Track it in{' '}
+              <Link to="/requests" className="font-semibold underline">
+                My requests
+              </Link>
+              .
+            </p>
+          ) : (
+            <Button className="w-full" onClick={() => onRequest(ride)}>
+              Request seat
+            </Button>
+          )}
+        </div>
+      )}
     </article>
   )
 }

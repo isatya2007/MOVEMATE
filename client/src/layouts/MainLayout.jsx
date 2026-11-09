@@ -3,10 +3,13 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.js'
 import Button from '../components/common/Button.jsx'
 
-// One list of links, used by the top bar (bigger screens) and the bottom bar (phones)
+// One list of links, used by the top bar (bigger screens) and the bottom bar (phones).
+// `short` is the shorter name that fits on a phone.
 const LINKS = [
-  { to: '/dashboard', label: 'Find a ride' },
-  { to: '/requests', label: 'My requests' },
+  { to: '/dashboard', label: 'Find a ride', short: 'Find' },
+  { to: '/offer', label: 'Offer a ride', short: 'Offer' },
+  { to: '/my-rides', label: 'My rides', short: 'My rides' },
+  { to: '/requests', label: 'My requests', short: 'Requests' },
 ]
 
 export default function MainLayout() {
@@ -27,7 +30,7 @@ export default function MainLayout() {
           </Link>
 
           {/* Top links: tablets and computers */}
-          <nav aria-label="Main" className="hidden gap-1 sm:flex">
+          <nav aria-label="Main" className="hidden gap-1 md:flex">
             {LINKS.map((link) => (
               <NavLink
                 key={link.to}
@@ -44,7 +47,7 @@ export default function MainLayout() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-slate-600 md:inline">{user?.name}</span>
+            <span className="hidden text-sm text-slate-600 lg:inline">{user?.name}</span>
             <Button variant="secondary" className="h-10 px-4 text-sm" loading={leaving} onClick={handleLogout}>
               Log out
             </Button>
@@ -53,26 +56,27 @@ export default function MainLayout() {
       </header>
 
       {/* extra space at the bottom on phones so the bottom bar never covers content */}
-      <main className="mx-auto max-w-5xl px-4 py-6 pb-28 sm:py-10 sm:pb-10">
+      <main className="mx-auto max-w-5xl px-4 py-6 pb-28 md:py-10 md:pb-10">
         <Outlet />
       </main>
 
       {/* Bottom bar: phones only */}
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-10 flex border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] sm:hidden"
+        className="fixed inset-x-0 bottom-0 z-10 flex border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         {LINKS.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}
+            aria-label={link.label}
             className={({ isActive }) =>
-              `flex h-16 flex-1 items-center justify-center text-sm font-semibold ${
+              `flex h-16 flex-1 items-center justify-center px-1 text-center text-sm font-semibold ${
                 isActive ? 'text-brand-700' : 'text-slate-500'
               }`
             }
           >
-            {link.label}
+            {link.short}
           </NavLink>
         ))}
       </nav>

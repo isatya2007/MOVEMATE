@@ -8,6 +8,8 @@ import Register from './pages/Register.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import RideSearch from './pages/RideSearch.jsx'
 import MyRequests from './pages/MyRequests.jsx'
+import OfferRide from './pages/OfferRide.jsx'
+import MyRides from './pages/MyRides.jsx'
 import NotFound from './pages/NotFound.jsx'
 
 export default function App() {
@@ -29,6 +31,8 @@ export default function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/search" element={<RideSearch />} />
               <Route path="/requests" element={<MyRequests />} />
+              <Route path="/offer" element={<OfferRide />} />
+              <Route path="/my-rides" element={<MyRides />} />
             </Route>
           </Route>
 

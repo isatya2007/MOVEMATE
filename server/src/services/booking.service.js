@@ -1,6 +1,7 @@
 import { Ride } from '../models/Ride.js';
 import { RideRequest } from '../models/RideRequest.js';
 import { AppError } from '../utils/AppError.js';
+import { notify, rideLabel } from './notification.service.js';
 
 const REQUESTER_FIELDS = 'name profile.photoUrl community verificationStatus createdAt';
 
@@ -65,6 +66,15 @@ export async function createRequest(user, rideId, data) {
   }
 
   const request = await RideRequest.create({ ...data, rideId, requesterId: user._id });
+
+  // Tell the provider (a failure here never undoes the request)
+  await notify(ride.providerId, {
+    type: 'ride_request',
+    title: 'New seat request',
+    body: `${user.name} asked for ${data.passengerCount} ${data.passengerCount === 1 ? 'seat' : 'seats'} on your ride ${rideLabel(ride)}.`,
+    relatedEntity: { kind: 'ride_request', id: request._id },
+  });
+
   return formatRequest(request.toObject());
 }
 
@@ -119,18 +129,18 @@ export async function respondToRequest(user, requestId, { status, reason }) {
 
   if (status === 'accepted') {
     if (!isProvider) throw new AppError(403, 'FORBIDDEN', 'Only the ride provider can accept requests.');
-    return acceptRequest(request, ride);
+    return acceptRequest(request, ride, user);
   }
   if (status === 'rejected') {
     if (!isProvider) throw new AppError(403, 'FORBIDDEN', 'Only the ride provider can reject requests.');
-    return rejectRequest(request, reason);
+    return rejectRequest(request, ride, user, reason);
   }
   // status === 'cancelled'
   if (!isRequester) throw new AppError(403, 'FORBIDDEN', 'Only the traveler can cancel their request.');
-  return cancelRequest(request, ride, reason);
+  return cancelRequest(request, ride, user, reason);
 }
 
-async function acceptRequest(request, ride) {
+async function acceptRequest(request, ride, provider) {
   if (request.status !== 'pending') {
     throw new AppError(409, 'REQUEST_NOT_PENDING', 'This request has already been handled.');
   }
@@ -161,20 +171,35 @@ async function acceptRequest(request, ride) {
     throw new AppError(409, 'REQUEST_NOT_PENDING', 'This request has already been handled.');
   }
 
+  await notify(request.requesterId, {
+    type: 'request_accepted',
+    title: 'Seat confirmed',
+    body: `${provider.name} accepted your request for ${rideLabel(ride)}.`,
+    relatedEntity: { kind: 'ride_request', id: request._id },
+  });
+
   return { request: formatRequest(confirmed.toObject()), seatsAvailable: updatedRide.seatsAvailable };
 }
 
-async function rejectRequest(request, reason) {
+async function rejectRequest(request, ride, provider, reason) {
   const rejected = await RideRequest.findOneAndUpdate(
     { _id: request._id, status: 'pending' },
     { status: 'rejected', rejectReason: reason, respondedAt: new Date() },
     { new: true }
   );
   if (!rejected) throw new AppError(409, 'REQUEST_NOT_PENDING', 'This request has already been handled.');
+
+  await notify(request.requesterId, {
+    type: 'request_rejected',
+    title: 'Request declined',
+    body: `${provider.name} could not take your request for ${rideLabel(ride)}.${reason ? ` Reason: ${reason}` : ''}`,
+    relatedEntity: { kind: 'ride_request', id: request._id },
+  });
+
   return { request: formatRequest(rejected.toObject()) };
 }
 
-async function cancelRequest(request, ride, reason) {
+async function cancelRequest(request, ride, traveler, reason) {
   if (!ride || ride.status !== 'published') {
     throw new AppError(409, 'RIDE_NOT_AVAILABLE', 'This ride can no longer be changed.');
   }
@@ -192,6 +217,13 @@ async function cancelRequest(request, ride, reason) {
   if (before.status === 'accepted') {
     await Ride.updateOne({ _id: before.rideId }, { $inc: { seatsAvailable: before.passengerCount } });
   }
+
+  await notify(ride.providerId, {
+    type: 'request_cancelled',
+    title: 'Request cancelled',
+    body: `${traveler.name} cancelled their request for ${rideLabel(ride)}.${before.status === 'accepted' ? ' Their seat is free again.' : ''}`,
+    relatedEntity: { kind: 'ride_request', id: request._id },
+  });
 
   return { request: formatRequest({ ...before.toObject(), status: 'cancelled', cancelReason: reason }) };
 }

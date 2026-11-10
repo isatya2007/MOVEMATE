@@ -26,3 +26,17 @@ export function formatDeparture(iso) {
     minute: '2-digit',
   }).format(new Date(iso))
 }
+
+// "Just now", "5 minutes ago", "yesterday", "3 days ago", or a date for older ones.
+// `now` is passed in (a number from Date.now()) so the result stays the same while a page is open.
+export function timeAgo(iso, now) {
+  const seconds = Math.round((new Date(iso).getTime() - now) / 1000) // negative = in the past
+  const abs = Math.abs(seconds)
+  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
+
+  if (abs < 60) return 'Just now'
+  if (abs < 3600) return rtf.format(Math.round(seconds / 60), 'minute')
+  if (abs < 86400) return rtf.format(Math.round(seconds / 3600), 'hour')
+  if (abs < 7 * 86400) return rtf.format(Math.round(seconds / 86400), 'day')
+  return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date(iso))
+}

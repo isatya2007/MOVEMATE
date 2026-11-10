@@ -1,8 +1,9 @@
 import { Ride } from '../models/Ride.js';
 import { Vehicle } from '../models/Vehicle.js';
+import { RideRequest } from '../models/RideRequest.js';
+import { notifyMany, rideLabel } from './notification.service.js';
 import { AppError } from '../utils/AppError.js';
 import { scoreRide } from './matching.service.js';
-import { RideRequest } from '../models/RideRequest.js';
 
 const PROVIDER_FIELDS = 'name profile.photoUrl community verificationStatus createdAt';
 const VEHICLE_FIELDS = 'type make model colour capacity'; // registration number is never selected
@@ -143,16 +144,28 @@ export async function cancelRide(user, rideId, reason) {
     { new: true }
   );
 
-   if (!ride) {
+  if (!ride) {
     const exists = await Ride.exists({ _id: rideId, providerId: user._id });
     if (!exists) throw new AppError(404, 'NOT_FOUND', 'Ride not found.');
     throw new AppError(409, 'RIDE_NOT_CANCELLABLE', 'Only published rides can be cancelled.');
   }
 
   // Everyone who asked for (or was given) a seat on this ride is cancelled too
+  const affected = await RideRequest.find({ rideId, status: { $in: ['pending', 'accepted'] } }).select('requesterId');
   await RideRequest.updateMany(
     { rideId, status: { $in: ['pending', 'accepted'] } },
     { status: 'cancelled', cancelReason: 'Ride cancelled by the provider', cancelledAt: new Date() }
+  );
+
+  // ...and they are told why
+  await notifyMany(
+    affected.map((r) => r.requesterId),
+    {
+      type: 'ride_cancelled',
+      title: 'Ride cancelled',
+      body: `${user.name} cancelled the ride ${rideLabel(ride)}. Reason: ${reason}`,
+      relatedEntity: { kind: 'ride', id: ride._id },
+    }
   );
   return ride;
 }

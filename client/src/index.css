@@ -1,14 +1,6 @@
-@import "tailwindcss";
-
-/* Your MoveMate greens, in ONE place. Every bg-brand-*, text-brand-* and
-   ring-brand-* class in the app uses these values. */
-@theme {
-  --color-brand-50: #e5f6ee;
-  --color-brand-100: #c9edda;
-  --color-brand-600: #0b956b;
-  --color-brand-700: #07845e;
-  --color-brand-800: #056347;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 html {
   scroll-behavior: smooth;
